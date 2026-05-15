@@ -9,6 +9,9 @@ MAX_PUZZLE_SIZE = 6
 PUZZLE_SIZE = 4
 GOAL_STATE = ()
 GOAL_POS = {}
+BLANK_MOVES = []
+BLANK_MOVE_INDEX = []
+DISTANCE_TABLE = []
 
 
 def build_goal_state(size):
@@ -19,16 +22,51 @@ def build_goal_pos(goal_state, size):
     return {value: divmod(idx, size) for idx, value in enumerate(goal_state)}
 
 
+def build_blank_moves(size):
+    total = size * size
+    moves = [[] for _ in range(total)]
+    move_index = [{} for _ in range(total)]
+    for idx in range(total):
+        row, col = divmod(idx, size)
+        if row > 0:
+            moves[idx].append(("U", idx - size))
+            move_index[idx]["U"] = idx - size
+        if row < size - 1:
+            moves[idx].append(("D", idx + size))
+            move_index[idx]["D"] = idx + size
+        if col > 0:
+            moves[idx].append(("L", idx - 1))
+            move_index[idx]["L"] = idx - 1
+        if col < size - 1:
+            moves[idx].append(("R", idx + 1))
+            move_index[idx]["R"] = idx + 1
+    return moves, move_index
+
+
+def build_distance_table(goal_pos, size):
+    total = size * size
+    positions = [divmod(idx, size) for idx in range(total)]
+    table = [[0] * total for _ in range(total)]
+    for value in range(1, total):
+        goal_row, goal_col = goal_pos[value]
+        for idx in range(total):
+            row, col = positions[idx]
+            table[value][idx] = abs(row - goal_row) + abs(col - goal_col)
+    return table
+
+
 def set_puzzle_size(size):
     if size < MIN_PUZZLE_SIZE or size > MAX_PUZZLE_SIZE:
         raise ValueError(
             "Puzzle size must be between "
             f"{MIN_PUZZLE_SIZE} and {MAX_PUZZLE_SIZE}."
         )
-    global PUZZLE_SIZE, GOAL_STATE, GOAL_POS
+    global PUZZLE_SIZE, GOAL_STATE, GOAL_POS, BLANK_MOVES, BLANK_MOVE_INDEX, DISTANCE_TABLE
     PUZZLE_SIZE = size
     GOAL_STATE = build_goal_state(size)
     GOAL_POS = build_goal_pos(GOAL_STATE, size)
+    BLANK_MOVES, BLANK_MOVE_INDEX = build_blank_moves(size)
+    DISTANCE_TABLE = build_distance_table(GOAL_POS, size)
 
 
 set_puzzle_size(PUZZLE_SIZE)
@@ -40,28 +78,17 @@ MAX_BACKJUMP_DEPTH = 80
 
 def manhattan(state):
     total = 0
+    distances = DISTANCE_TABLE
     for idx, value in enumerate(state):
         if value == 0:
             continue
-        row, col = divmod(idx, PUZZLE_SIZE)
-        goal_row, goal_col = GOAL_POS[value]
-        total += abs(row - goal_row) + abs(col - goal_col)
+        total += distances[value][idx]
     return total
 
 
 def puzzle_neighbors(state):
     idx0 = state.index(0)
-    row, col = divmod(idx0, PUZZLE_SIZE)
-    moves = []
-    if row > 0:
-        moves.append(("U", idx0 - PUZZLE_SIZE))
-    if row < PUZZLE_SIZE - 1:
-        moves.append(("D", idx0 + PUZZLE_SIZE))
-    if col > 0:
-        moves.append(("L", idx0 - 1))
-    if col < PUZZLE_SIZE - 1:
-        moves.append(("R", idx0 + 1))
-    for move, idx in moves:
+    for move, idx in BLANK_MOVES[idx0]:
         new_state = list(state)
         new_state[idx0], new_state[idx] = new_state[idx], new_state[idx0]
         yield move, tuple(new_state)
@@ -69,16 +96,8 @@ def puzzle_neighbors(state):
 
 def apply_move(state, move):
     idx0 = state.index(0)
-    row, col = divmod(idx0, PUZZLE_SIZE)
-    if move == "U":
-        idx = idx0 - PUZZLE_SIZE
-    elif move == "D":
-        idx = idx0 + PUZZLE_SIZE
-    elif move == "L":
-        idx = idx0 - 1
-    elif move == "R":
-        idx = idx0 + 1
-    else:
+    idx = BLANK_MOVE_INDEX[idx0].get(move)
+    if idx is None:
         raise ValueError(f"Unknown move: {move}")
     new_state = list(state)
     new_state[idx0], new_state[idx] = new_state[idx], new_state[idx0]
