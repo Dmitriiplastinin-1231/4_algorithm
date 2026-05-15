@@ -9,6 +9,8 @@ MAX_PUZZLE_SIZE = 6
 PUZZLE_SIZE = 4
 GOAL_STATE = ()
 GOAL_POS = {}
+NEIGHBOR_TABLE = []
+MANHATTAN_TABLE = []
 
 
 def build_goal_state(size):
@@ -19,16 +21,45 @@ def build_goal_pos(goal_state, size):
     return {value: divmod(idx, size) for idx, value in enumerate(goal_state)}
 
 
+def build_neighbor_table(size):
+    table = []
+    for idx in range(size * size):
+        row, col = divmod(idx, size)
+        moves = []
+        if row > 0:
+            moves.append(("U", idx - size))
+        if row < size - 1:
+            moves.append(("D", idx + size))
+        if col > 0:
+            moves.append(("L", idx - 1))
+        if col < size - 1:
+            moves.append(("R", idx + 1))
+        table.append(moves)
+    return table
+
+
+def build_manhattan_table(size, goal_pos):
+    table = [[0] * (size * size) for _ in range(size * size)]
+    for value in range(1, size * size):
+        goal_row, goal_col = goal_pos[value]
+        for idx in range(size * size):
+            row, col = divmod(idx, size)
+            table[value][idx] = abs(row - goal_row) + abs(col - goal_col)
+    return table
+
+
 def set_puzzle_size(size):
     if size < MIN_PUZZLE_SIZE or size > MAX_PUZZLE_SIZE:
         raise ValueError(
             "Puzzle size must be between "
             f"{MIN_PUZZLE_SIZE} and {MAX_PUZZLE_SIZE}."
         )
-    global PUZZLE_SIZE, GOAL_STATE, GOAL_POS
+    global PUZZLE_SIZE, GOAL_STATE, GOAL_POS, NEIGHBOR_TABLE, MANHATTAN_TABLE
     PUZZLE_SIZE = size
     GOAL_STATE = build_goal_state(size)
     GOAL_POS = build_goal_pos(GOAL_STATE, size)
+    NEIGHBOR_TABLE = build_neighbor_table(size)
+    MANHATTAN_TABLE = build_manhattan_table(size, GOAL_POS)
 
 
 set_puzzle_size(PUZZLE_SIZE)
@@ -43,25 +74,13 @@ def manhattan(state):
     for idx, value in enumerate(state):
         if value == 0:
             continue
-        row, col = divmod(idx, PUZZLE_SIZE)
-        goal_row, goal_col = GOAL_POS[value]
-        total += abs(row - goal_row) + abs(col - goal_col)
+        total += MANHATTAN_TABLE[value][idx]
     return total
 
 
 def puzzle_neighbors(state):
     idx0 = state.index(0)
-    row, col = divmod(idx0, PUZZLE_SIZE)
-    moves = []
-    if row > 0:
-        moves.append(("U", idx0 - PUZZLE_SIZE))
-    if row < PUZZLE_SIZE - 1:
-        moves.append(("D", idx0 + PUZZLE_SIZE))
-    if col > 0:
-        moves.append(("L", idx0 - 1))
-    if col < PUZZLE_SIZE - 1:
-        moves.append(("R", idx0 + 1))
-    for move, idx in moves:
+    for move, idx in NEIGHBOR_TABLE[idx0]:
         new_state = list(state)
         new_state[idx0], new_state[idx] = new_state[idx], new_state[idx0]
         yield move, tuple(new_state)
@@ -108,7 +127,9 @@ def solve_puzzle_astar(start, stop_event=None):
     open_heap = []
     g_score = {start: 0}
     came_from = {start: (None, None)}
-    heapq.heappush(open_heap, (manhattan(start), 0, start))
+    h_start = manhattan(start)
+    h_score = {start: h_start}
+    heapq.heappush(open_heap, (h_start, 0, start))
     nodes = 0
 
     while open_heap:
@@ -120,12 +141,20 @@ def solve_puzzle_astar(start, stop_event=None):
         nodes += 1
         if state == GOAL_STATE:
             return build_path(came_from, state), nodes
-        for move, nxt in puzzle_neighbors(state):
+        current_h = h_score[state]
+        idx0 = state.index(0)
+        for move, idx in NEIGHBOR_TABLE[idx0]:
+            tile = state[idx]
+            nxt = list(state)
+            nxt[idx0], nxt[idx] = nxt[idx], nxt[idx0]
+            nxt = tuple(nxt)
             ng = g + 1
             if ng < g_score.get(nxt, INF):
                 g_score[nxt] = ng
                 came_from[nxt] = (state, move)
-                heapq.heappush(open_heap, (ng + manhattan(nxt), ng, nxt))
+                new_h = current_h + (MANHATTAN_TABLE[tile][idx0] - MANHATTAN_TABLE[tile][idx])
+                h_score[nxt] = new_h
+                heapq.heappush(open_heap, (ng + new_h, ng, nxt))
     return None, nodes
 
 
@@ -140,7 +169,11 @@ def solve_puzzle_bfs(start, stop_event=None):
         nodes += 1
         if state == GOAL_STATE:
             return build_path(came_from, state), nodes
-        for move, nxt in puzzle_neighbors(state):
+        idx0 = state.index(0)
+        for move, idx in NEIGHBOR_TABLE[idx0]:
+            nxt = list(state)
+            nxt[idx0], nxt[idx] = nxt[idx], nxt[idx0]
+            nxt = tuple(nxt)
             if nxt not in came_from:
                 came_from[nxt] = (state, move)
                 queue.append(nxt)
@@ -153,23 +186,29 @@ def solve_puzzle_ida(start, stop_event=None):
     visited = {start}
     nodes = 0
 
-    def dfs(state, g, bound):
+    def dfs(state, g, bound, h):
         nonlocal nodes
         if stop_event and stop_event.is_set():
             raise StopSearch()
         nodes += 1
-        f = g + manhattan(state)
+        f = g + h
         if f > bound:
             return f
         if state == GOAL_STATE:
             return "FOUND"
         minimum = INF
-        for move, nxt in puzzle_neighbors(state):
+        idx0 = state.index(0)
+        for move, idx in NEIGHBOR_TABLE[idx0]:
+            tile = state[idx]
+            nxt = list(state)
+            nxt[idx0], nxt[idx] = nxt[idx], nxt[idx0]
+            nxt = tuple(nxt)
             if nxt in visited:
                 continue
             visited.add(nxt)
             path.append(move)
-            result = dfs(nxt, g + 1, bound)
+            new_h = h + (MANHATTAN_TABLE[tile][idx0] - MANHATTAN_TABLE[tile][idx])
+            result = dfs(nxt, g + 1, bound, new_h)
             if result == "FOUND":
                 return "FOUND"
             if result < minimum:
@@ -181,7 +220,7 @@ def solve_puzzle_ida(start, stop_event=None):
     while True:
         if stop_event and stop_event.is_set():
             raise StopSearch()
-        result = dfs(start, 0, bound)
+        result = dfs(start, 0, bound, bound)
         if result == "FOUND":
             return list(path), nodes
         if result == INF:
@@ -194,12 +233,20 @@ def solve_puzzle_backjumping(start, stop_event=None):
     nodes_total = 0
     backjumps = 0
 
-    def ordered_neighbors(state):
-        moves = list(puzzle_neighbors(state))
-        moves.sort(key=lambda item: manhattan(item[1]))
-        return moves
+    def ordered_neighbors(state, h):
+        idx0 = state.index(0)
+        moves = []
+        for move, idx in NEIGHBOR_TABLE[idx0]:
+            tile = state[idx]
+            nxt = list(state)
+            nxt[idx0], nxt[idx] = nxt[idx], nxt[idx0]
+            nxt = tuple(nxt)
+            new_h = h + (MANHATTAN_TABLE[tile][idx0] - MANHATTAN_TABLE[tile][idx])
+            moves.append((new_h, move, nxt))
+        moves.sort(key=lambda item: item[0])
+        return [(move, nxt, new_h) for new_h, move, nxt in moves]
 
-    def dfs(state, depth_limit, visited, path):
+    def dfs(state, depth_limit, visited, path, h):
         nonlocal nodes_total, backjumps
         if stop_event and stop_event.is_set():
             raise StopSearch()
@@ -209,13 +256,13 @@ def solve_puzzle_backjumping(start, stop_event=None):
         if depth_limit == 0:
             return False
         any_branch = False
-        for move, nxt in ordered_neighbors(state):
+        for move, nxt, new_h in ordered_neighbors(state, h):
             if nxt in visited:
                 continue
             any_branch = True
             visited.add(nxt)
             path.append(move)
-            if dfs(nxt, depth_limit - 1, visited, path):
+            if dfs(nxt, depth_limit - 1, visited, path, new_h):
                 return True
             path.pop()
             visited.remove(nxt)
@@ -228,7 +275,7 @@ def solve_puzzle_backjumping(start, stop_event=None):
             raise StopSearch()
         path = []
         visited = {start}
-        found = dfs(start, depth, visited, path)
+        found = dfs(start, depth, visited, path, manhattan(start))
         if found:
             return path, nodes_total, backjumps
         depth += 1
