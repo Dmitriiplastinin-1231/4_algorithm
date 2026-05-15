@@ -148,7 +148,15 @@ def solve_hamilton(rows, cols, start, finish, blocked, mode, stop_event=None):
     def backjumping():
         nonlocal solutions, nodes
         backjumps = 0
-        stack = [{"pos": start, "moves": ordered_moves(start), "index": 0}]
+        start_moves = ordered_moves(start)
+        stack = [
+            {
+                "pos": start,
+                "moves": start_moves,
+                "index": 0,
+                "moves_len": len(start_moves),
+            }
+        ]
         while stack:
             if stop_event and stop_event.is_set():
                 raise StopSearch()
@@ -164,11 +172,11 @@ def solve_hamilton(rows, cols, start, finish, blocked, mode, stop_event=None):
                 stack.pop()
                 unvisit(pos)
                 continue
-            if frame["index"] >= len(frame["moves"]):
+            if frame["index"] >= frame["moves_len"]:
                 stack.pop()
                 unvisit(pos)
                 jump_count = 0
-                while stack and stack[-1]["index"] >= len(stack[-1]["moves"]):
+                while stack and stack[-1]["index"] >= stack[-1]["moves_len"]:
                     frame = stack.pop()
                     unvisit(frame["pos"])
                     jump_count += 1
@@ -181,7 +189,15 @@ def solve_hamilton(rows, cols, start, finish, blocked, mode, stop_event=None):
                 continue
             visit(nxt)
             nodes += 1
-            stack.append({"pos": nxt, "moves": ordered_moves(nxt), "index": 0})
+            moves = ordered_moves(nxt)
+            stack.append(
+                {
+                    "pos": nxt,
+                    "moves": moves,
+                    "index": 0,
+                    "moves_len": len(moves),
+                }
+            )
         return backjumps
 
     backjumps = 0
