@@ -179,15 +179,19 @@ def solve_puzzle_backjumping(start, stop_event=None):
             return True
         if depth_limit == 0:
             return False
+        any_branch = False
         for move, nxt in ordered_neighbors(state):
             if nxt in visited:
                 continue
+            any_branch = True
             visited.add(nxt)
             path.append(move)
             if dfs(nxt, depth_limit - 1, visited, path):
                 return True
             path.pop()
             visited.remove(nxt)
+        if not any_branch and depth_limit > 0:
+            backjumps += 1
         return False
 
     while depth <= MAX_BACKJUMP_DEPTH:

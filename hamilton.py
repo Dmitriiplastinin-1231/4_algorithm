@@ -132,13 +132,7 @@ def solve_hamilton(rows, cols, start, finish, blocked, mode, stop_event=None):
 
     backjumps = 0
     if mode == "Backjumping":
-        try:
-            backjumps = backjumping()
-        except StopSearch:
-            return None
+        backjumps = backjumping()
     else:
-        try:
-            backtrack(start)
-        except StopSearch:
-            return None
+        backtrack(start)
     return SolverStats(solutions, None, nodes, backjumps, 0.0, 0.0)
