@@ -5,8 +5,27 @@ from utils import StopSearch
 
 
 PUZZLE_SIZE = 4
-GOAL_STATE = tuple(list(range(1, 16)) + [0])
-GOAL_POS = {value: divmod(idx, PUZZLE_SIZE) for idx, value in enumerate(GOAL_STATE)}
+
+
+def build_goal_state(size):
+    return tuple(list(range(1, size * size)) + [0])
+
+
+def build_goal_pos(goal_state, size):
+    return {value: divmod(idx, size) for idx, value in enumerate(goal_state)}
+
+
+def set_puzzle_size(size):
+    if size < 2:
+        raise ValueError("Puzzle size must be at least 2.")
+    global PUZZLE_SIZE, GOAL_STATE, GOAL_POS
+    PUZZLE_SIZE = size
+    GOAL_STATE = build_goal_state(size)
+    GOAL_POS = build_goal_pos(GOAL_STATE, size)
+
+
+GOAL_STATE = build_goal_state(PUZZLE_SIZE)
+GOAL_POS = build_goal_pos(GOAL_STATE, PUZZLE_SIZE)
 INF = float("inf")
 SCRAMBLE_MOVES = 120  # Random moves applied to generate a solvable board.
 ANIMATION_DELAY_MS = 120
@@ -61,8 +80,12 @@ def apply_move(state, move):
 
 
 def is_solvable(state):
-    if len(state) != 16:
-        raise ValueError("Expected a 4x4 puzzle state (16 tiles).")
+    if len(state) != PUZZLE_SIZE * PUZZLE_SIZE:
+        raise ValueError(
+            "Expected a "
+            f"{PUZZLE_SIZE}x{PUZZLE_SIZE} puzzle state "
+            f"({PUZZLE_SIZE * PUZZLE_SIZE} tiles)."
+        )
     values = [v for v in state if v != 0]
     inversions = 0
     for i in range(len(values)):

@@ -3,14 +3,14 @@ import threading
 import tkinter as tk
 from tkinter import messagebox, ttk
 
+import puzzle
 from puzzle import (
     ANIMATION_DELAY_MS,
-    GOAL_STATE,
-    PUZZLE_SIZE,
     SCRAMBLE_MOVES,
     apply_move,
     is_solvable,
     puzzle_neighbors,
+    set_puzzle_size,
     solve_puzzle_astar,
     solve_puzzle_backjumping,
     solve_puzzle_bfs,
@@ -30,36 +30,48 @@ class PuzzleTab(ttk.Frame):
     def __init__(self, master):
         super().__init__(master)
         self.algorithm_var = tk.StringVar(value="A* (Манхэттен)")
+        self.size_var = tk.IntVar(value=puzzle.PUZZLE_SIZE)
         self.status_var = tk.StringVar(value="Готово")
         self.result_var = tk.StringVar(value="")
         self.stop_event = None
         self.worker = None
         self.cell_size = 70
-        self.state = GOAL_STATE
+        self.state = puzzle.GOAL_STATE
         self.rects = []
         self.texts = []
 
         controls = ttk.Frame(self)
         controls.pack(side=tk.TOP, fill=tk.X, padx=10, pady=5)
 
-        ttk.Label(controls, text="Алгоритм").grid(row=0, column=0, sticky=tk.W)
+        ttk.Label(controls, text="Размер").grid(row=0, column=0, sticky=tk.W)
+        ttk.Spinbox(
+            controls,
+            from_=2,
+            to=6,
+            textvariable=self.size_var,
+            width=4,
+        ).grid(row=0, column=1, sticky=tk.W)
+        ttk.Button(controls, text="Применить", command=self.apply_size).grid(
+            row=0, column=2, padx=5
+        )
+        ttk.Label(controls, text="Алгоритм").grid(row=0, column=3, sticky=tk.W)
         ttk.OptionMenu(
             controls,
             self.algorithm_var,
             self.algorithm_var.get(),
             *ALGORITHM_LABELS.keys(),
-        ).grid(row=0, column=1, padx=5)
+        ).grid(row=0, column=4, padx=5)
         ttk.Button(controls, text="Перемешать", command=self.randomize).grid(
-            row=0, column=2, padx=5
+            row=0, column=5, padx=5
         )
         ttk.Button(controls, text="Сбросить", command=self.reset).grid(
-            row=0, column=3, padx=5
+            row=0, column=6, padx=5
         )
         ttk.Button(controls, text="Решить", command=self.solve).grid(
-            row=0, column=4, padx=5
+            row=0, column=7, padx=5
         )
         ttk.Button(controls, text="Стоп", command=self.stop).grid(
-            row=0, column=5, padx=5
+            row=0, column=8, padx=5
         )
 
         status = ttk.Frame(self)
@@ -82,17 +94,18 @@ class PuzzleTab(ttk.Frame):
 
     def build_board(self):
         self.canvas.delete("all")
+        size = puzzle.PUZZLE_SIZE
         self.rects = [
-            [None for _ in range(PUZZLE_SIZE)] for _ in range(PUZZLE_SIZE)
+            [None for _ in range(size)] for _ in range(size)
         ]
         self.texts = [
-            [None for _ in range(PUZZLE_SIZE)] for _ in range(PUZZLE_SIZE)
+            [None for _ in range(size)] for _ in range(size)
         ]
         self.canvas.config(
-            width=PUZZLE_SIZE * self.cell_size, height=PUZZLE_SIZE * self.cell_size
+            width=size * self.cell_size, height=size * self.cell_size
         )
-        for r in range(PUZZLE_SIZE):
-            for c in range(PUZZLE_SIZE):
+        for r in range(size):
+            for c in range(size):
                 x1 = c * self.cell_size
                 y1 = r * self.cell_size
                 x2 = x1 + self.cell_size
@@ -110,8 +123,9 @@ class PuzzleTab(ttk.Frame):
                 self.texts[r][c] = text
 
     def render(self):
+        size = puzzle.PUZZLE_SIZE
         for idx, value in enumerate(self.state):
-            row, col = divmod(idx, PUZZLE_SIZE)
+            row, col = divmod(idx, size)
             if value == 0:
                 self.canvas.itemconfig(self.rects[row][col], fill="#d0d0d0")
                 self.canvas.itemconfig(self.texts[row][col], text="")
@@ -120,7 +134,7 @@ class PuzzleTab(ttk.Frame):
                 self.canvas.itemconfig(self.texts[row][col], text=str(value))
 
     def randomize(self):
-        self.state = GOAL_STATE
+        self.state = puzzle.GOAL_STATE
         for _ in range(SCRAMBLE_MOVES):
             neighbors = list(puzzle_neighbors(self.state))
             _, next_state = random.choice(neighbors)
@@ -129,18 +143,36 @@ class PuzzleTab(ttk.Frame):
         self.result_var.set("")
 
     def reset(self):
-        self.state = GOAL_STATE
+        self.state = puzzle.GOAL_STATE
+        self.render()
+        self.result_var.set("")
+
+    def apply_size(self):
+        if self.worker and self.worker.is_alive():
+            messagebox.showinfo(
+                "Занято", "Нельзя менять размер во время поиска решения."
+            )
+            return
+        size = self.size_var.get()
+        try:
+            set_puzzle_size(size)
+        except ValueError as exc:
+            messagebox.showwarning("Размер", str(exc))
+            return
+        self.state = puzzle.GOAL_STATE
+        self.build_board()
         self.render()
         self.result_var.set("")
 
     def on_canvas_click(self, event):
+        size = puzzle.PUZZLE_SIZE
         row = event.y // self.cell_size
         col = event.x // self.cell_size
-        if not (0 <= row < PUZZLE_SIZE and 0 <= col < PUZZLE_SIZE):
+        if not (0 <= row < size and 0 <= col < size):
             return
-        idx = row * PUZZLE_SIZE + col
+        idx = row * size + col
         idx0 = self.state.index(0)
-        row0, col0 = divmod(idx0, PUZZLE_SIZE)
+        row0, col0 = divmod(idx0, size)
         if abs(row - row0) + abs(col - col0) == 1:
             new_state = list(self.state)
             new_state[idx0], new_state[idx] = new_state[idx], new_state[idx0]
