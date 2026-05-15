@@ -69,12 +69,11 @@ def solve_hamilton(rows, cols, start, finish, blocked, mode, stop_event=None):
         return SolverStats(0, None, 0, 0, 0.0, 0.0)
 
     free_count = len(free_cells)
-    visited = set()
+    visited = {start}
     unvisited = set(free_cells)
-    remaining_degree = {
-        cell: len(neighbors[cell]) for cell in free_cells
-    }
-    path = []
+    unvisited.remove(start)
+    remaining_degree = {cell: len(neighbors[cell]) for cell in free_cells}
+    path = [start]
     solutions = 0
     nodes = 0
 
@@ -90,15 +89,15 @@ def solve_hamilton(rows, cols, start, finish, blocked, mode, stop_event=None):
                 remaining_degree[nbr] -= 1
 
     def unvisit(cell):
+        visited.remove(cell)
+        path.pop()
         unvisited.add(cell)
+        count = 0
         for nbr in neighbors[cell]:
             if nbr in unvisited:
                 remaining_degree[nbr] += 1
-        remaining_degree[cell] = sum(
-            1 for nbr in neighbors[cell] if nbr in unvisited
-        )
-        visited.remove(cell)
-        path.pop()
+                count += 1
+        remaining_degree[cell] = count
 
     def degree_pruning(pos):
         forced = None
@@ -188,6 +187,9 @@ def solve_hamilton(rows, cols, start, finish, blocked, mode, stop_event=None):
         return backjumps
 
     visit(start)
+    for nbr in neighbors[start]:
+        if nbr in unvisited:
+            remaining_degree[nbr] -= 1
     backjumps = 0
     if mode == "Backjumping":
         backjumps = backjumping()
