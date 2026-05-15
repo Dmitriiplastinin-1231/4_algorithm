@@ -27,7 +27,7 @@ PUZZLE_SIZE = 4
 GOAL_STATE = tuple(list(range(1, 16)) + [0])
 GOAL_POS = {value: divmod(idx, PUZZLE_SIZE) for idx, value in enumerate(GOAL_STATE)}
 INF = float("inf")
-RANDOMIZE_MOVES = 120  # Scramble depth for generating a solvable random board.
+SCRAMBLE_DEPTH = 120  # Scramble depth for generating a solvable random board.
 ANIMATION_DELAY_MS = 120
 
 
@@ -133,8 +133,6 @@ def solve_hamilton(rows, cols, start, finish, blocked, mode, stop_event=None):
         if stop_event and stop_event.is_set():
             raise StopSearch()
         nodes += 1
-        if pos == finish and len(path) != free_count:
-            return
         if len(path) == free_count:
             if pos == finish:
                 solutions += 1
@@ -209,7 +207,7 @@ def manhattan(state):
     for idx, value in enumerate(state):
         if value == 0:
             continue
-        row, col = divmod(idx, 4)
+        row, col = divmod(idx, PUZZLE_SIZE)
         goal_row, goal_col = GOAL_POS[value]
         total += abs(row - goal_row) + abs(col - goal_col)
     return total
@@ -217,15 +215,15 @@ def manhattan(state):
 
 def puzzle_neighbors(state):
     idx0 = state.index(0)
-    row, col = divmod(idx0, 4)
+    row, col = divmod(idx0, PUZZLE_SIZE)
     moves = []
     if row > 0:
-        moves.append(("U", idx0 - 4))
-    if row < 3:
-        moves.append(("D", idx0 + 4))
+        moves.append(("U", idx0 - PUZZLE_SIZE))
+    if row < PUZZLE_SIZE - 1:
+        moves.append(("D", idx0 + PUZZLE_SIZE))
     if col > 0:
         moves.append(("L", idx0 - 1))
-    if col < 3:
+    if col < PUZZLE_SIZE - 1:
         moves.append(("R", idx0 + 1))
     for move, idx in moves:
         new_state = list(state)
@@ -235,17 +233,17 @@ def puzzle_neighbors(state):
 
 def apply_move(state, move):
     idx0 = state.index(0)
-    row, col = divmod(idx0, 4)
+    row, col = divmod(idx0, PUZZLE_SIZE)
     if move == "U":
-        idx = idx0 - 4
+        idx = idx0 - PUZZLE_SIZE
     elif move == "D":
-        idx = idx0 + 4
+        idx = idx0 + PUZZLE_SIZE
     elif move == "L":
         idx = idx0 - 1
     elif move == "R":
         idx = idx0 + 1
     else:
-        raise ValueError("Unknown move")
+        raise ValueError(f"Unknown move: {move}")
     new_state = list(state)
     new_state[idx0], new_state[idx] = new_state[idx], new_state[idx0]
     return tuple(new_state)
@@ -370,19 +368,15 @@ def solve_puzzle_backjumping(start, stop_event=None):
             return True
         if depth_limit == 0:
             return False
-        any_branch = False
         for move, nxt in ordered_neighbors(state):
             if nxt in visited:
                 continue
-            any_branch = True
             visited.add(nxt)
             path.append(move)
             if dfs(nxt, depth_limit - 1, visited, path):
                 return True
             path.pop()
             visited.remove(nxt)
-        if not any_branch and depth_limit > 0:
-            backjumps += 1
         return False
 
     while True:
@@ -661,11 +655,17 @@ class PuzzleTab(ttk.Frame):
 
     def build_board(self):
         self.canvas.delete("all")
-        self.rects = [[None for _ in range(4)] for _ in range(4)]
-        self.texts = [[None for _ in range(4)] for _ in range(4)]
-        self.canvas.config(width=4 * self.cell_size, height=4 * self.cell_size)
-        for r in range(4):
-            for c in range(4):
+        self.rects = [
+            [None for _ in range(PUZZLE_SIZE)] for _ in range(PUZZLE_SIZE)
+        ]
+        self.texts = [
+            [None for _ in range(PUZZLE_SIZE)] for _ in range(PUZZLE_SIZE)
+        ]
+        self.canvas.config(
+            width=PUZZLE_SIZE * self.cell_size, height=PUZZLE_SIZE * self.cell_size
+        )
+        for r in range(PUZZLE_SIZE):
+            for c in range(PUZZLE_SIZE):
                 x1 = c * self.cell_size
                 y1 = r * self.cell_size
                 x2 = x1 + self.cell_size
@@ -684,7 +684,7 @@ class PuzzleTab(ttk.Frame):
 
     def render(self):
         for idx, value in enumerate(self.state):
-            row, col = divmod(idx, 4)
+            row, col = divmod(idx, PUZZLE_SIZE)
             if value == 0:
                 self.canvas.itemconfig(self.rects[row][col], fill="#d0d0d0")
                 self.canvas.itemconfig(self.texts[row][col], text="")
@@ -694,7 +694,7 @@ class PuzzleTab(ttk.Frame):
 
     def randomize(self):
         self.state = GOAL_STATE
-        for _ in range(RANDOMIZE_MOVES):
+        for _ in range(SCRAMBLE_DEPTH):
             _, next_state = random.choice(list(puzzle_neighbors(self.state)))
             self.state = next_state
         self.render()
@@ -708,11 +708,11 @@ class PuzzleTab(ttk.Frame):
     def on_canvas_click(self, event):
         row = event.y // self.cell_size
         col = event.x // self.cell_size
-        if not (0 <= row < 4 and 0 <= col < 4):
+        if not (0 <= row < PUZZLE_SIZE and 0 <= col < PUZZLE_SIZE):
             return
-        idx = row * 4 + col
+        idx = row * PUZZLE_SIZE + col
         idx0 = self.state.index(0)
-        row0, col0 = divmod(idx0, 4)
+        row0, col0 = divmod(idx0, PUZZLE_SIZE)
         if abs(row - row0) + abs(col - col0) == 1:
             new_state = list(self.state)
             new_state[idx0], new_state[idx] = new_state[idx], new_state[idx0]
