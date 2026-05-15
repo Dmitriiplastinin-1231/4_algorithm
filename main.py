@@ -23,8 +23,9 @@ class SolverStats:
     peak_kb: float
 
 
+PUZZLE_SIZE = 4
 GOAL_STATE = tuple(list(range(1, 16)) + [0])
-GOAL_POS = {value: divmod(idx, 4) for idx, value in enumerate(GOAL_STATE)}
+GOAL_POS = {value: divmod(idx, PUZZLE_SIZE) for idx, value in enumerate(GOAL_STATE)}
 INF = float("inf")
 RANDOMIZE_MOVES = 120
 
@@ -248,17 +249,16 @@ def apply_move(state, move):
 def is_solvable(state):
     if len(state) != 16:
         raise ValueError("Expected a 4x4 puzzle state (16 tiles).")
-    width = int(len(state) ** 0.5)
     values = [v for v in state if v != 0]
     inversions = 0
     for i in range(len(values)):
         for j in range(i + 1, len(values)):
             if values[i] > values[j]:
                 inversions += 1
-    blank_row_from_bottom = width - (state.index(0) // width)
-    if width % 2 == 1:
+    blank_row_from_bottom_1indexed = PUZZLE_SIZE - (state.index(0) // PUZZLE_SIZE)
+    if PUZZLE_SIZE % 2 == 1:
         return inversions % 2 == 0
-    return (blank_row_from_bottom % 2 == 0) != (inversions % 2 == 0)
+    return (blank_row_from_bottom_1indexed % 2 == 0) != (inversions % 2 == 0)
 
 
 def solve_puzzle_astar(start, stop_event=None):
@@ -777,7 +777,8 @@ class PuzzleTab(ttk.Frame):
         """Animate a list of moves with a delay between frames.
 
         Args:
-            moves: List of move codes ('U', 'D', 'L', 'R') for the blank tile.
+            moves: List of move codes ('U', 'D', 'L', 'R') for blank moves
+                (e.g., 'U' swaps the blank with the tile above it).
             delay: Delay in milliseconds between animation frames.
         """
         if not moves:
