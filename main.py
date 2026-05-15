@@ -317,7 +317,7 @@ def solve_puzzle_ida(start, stop_event=None):
             return f
         if state == GOAL_STATE:
             return "FOUND"
-        minimum = float("inf")
+        minimum = INF
         for move, nxt in puzzle_neighbors(state):
             if nxt in visited:
                 continue
@@ -338,7 +338,7 @@ def solve_puzzle_ida(start, stop_event=None):
         result = dfs(start, 0, bound)
         if result == "FOUND":
             return list(path), nodes
-        if result == float("inf"):
+        if result == INF:
             return None, nodes
         bound = result
 
@@ -771,7 +771,12 @@ class PuzzleTab(ttk.Frame):
         self.animate_solution(stats.moves)
 
     def animate_solution(self, moves, delay=120):
-        """Animate moves with delay in milliseconds between frames."""
+        """Animate a list of moves with a delay between frames.
+
+        Args:
+            moves: List of move codes for the blank tile.
+            delay: Delay in milliseconds between animation frames.
+        """
         if not moves:
             return
 
