@@ -32,12 +32,12 @@ def run_with_stats(func):
 def format_stats(stats: SolverStats) -> str:
     lines = []
     if stats.solutions is not None:
-        lines.append(f"Paths: {stats.solutions}")
+        lines.append(f"Пути: {stats.solutions}")
     if stats.moves is not None:
-        lines.append(f"Moves: {len(stats.moves)}")
-    lines.append(f"Nodes expanded: {stats.nodes}")
+        lines.append(f"Ходы: {len(stats.moves)}")
+    lines.append(f"Узлов обработано: {stats.nodes}")
     if stats.backjumps:
-        lines.append(f"Backjumps: {stats.backjumps}")
-    lines.append(f"Time: {stats.elapsed:.3f}s")
-    lines.append(f"Peak memory: {stats.peak_kb:.1f} KB")
+        lines.append(f"Обратных прыжков: {stats.backjumps}")
+    lines.append(f"Время: {stats.elapsed:.3f}s")
+    lines.append(f"Пиковая память: {stats.peak_kb:.1f} KB")
     return "\n".join(lines)

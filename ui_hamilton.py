@@ -5,15 +5,24 @@ from tkinter import messagebox, ttk
 from hamilton import solve_hamilton
 from utils import StopSearch, format_stats, run_with_stats
 
+MODE_SET_START = "Задать старт"
+MODE_SET_FINISH = "Задать финиш"
+ALGORITHM_LABELS = {
+    "Поиск с возвратом": "Backtracking",
+    "Правило Варнсдорфа": "Warnsdorff",
+    "Отсечение по связности": "Connectivity pruning",
+    "Обратные прыжки": "Backjumping",
+}
+
 
 class HamiltonTab(ttk.Frame):
     def __init__(self, master):
         super().__init__(master)
         self.rows_var = tk.IntVar(value=7)
         self.cols_var = tk.IntVar(value=7)
-        self.mode_var = tk.StringVar(value="Set start")
-        self.algorithm_var = tk.StringVar(value="Backtracking")
-        self.status_var = tk.StringVar(value="Ready")
+        self.mode_var = tk.StringVar(value=MODE_SET_START)
+        self.algorithm_var = tk.StringVar(value="Поиск с возвратом")
+        self.status_var = tk.StringVar(value="Готово")
         self.result_var = tk.StringVar(value="")
         self.stop_event = None
         self.worker = None
@@ -26,43 +35,39 @@ class HamiltonTab(ttk.Frame):
         controls = ttk.Frame(self)
         controls.pack(side=tk.TOP, fill=tk.X, padx=10, pady=5)
 
-        ttk.Label(controls, text="Rows").grid(row=0, column=0, sticky=tk.W)
+        ttk.Label(controls, text="Строки").grid(row=0, column=0, sticky=tk.W)
         ttk.Spinbox(controls, from_=2, to=10, textvariable=self.rows_var, width=5).grid(
             row=0, column=1, sticky=tk.W
         )
-        ttk.Label(controls, text="Cols").grid(row=0, column=2, sticky=tk.W)
+        ttk.Label(controls, text="Столбцы").grid(row=0, column=2, sticky=tk.W)
         ttk.Spinbox(controls, from_=2, to=10, textvariable=self.cols_var, width=5).grid(
             row=0, column=3, sticky=tk.W
         )
-        ttk.Button(controls, text="Apply size", command=self.build_grid).grid(
+        ttk.Button(controls, text="Применить размер", command=self.build_grid).grid(
             row=0, column=4, padx=5
         )
-        ttk.Label(controls, text="Mode").grid(row=0, column=5, sticky=tk.W)
+        ttk.Label(controls, text="Режим").grid(row=0, column=5, sticky=tk.W)
         ttk.OptionMenu(
             controls,
             self.mode_var,
             self.mode_var.get(),
-            "Set start",
-            "Set finish",
-            "Toggle block",
+            MODE_SET_START,
+            MODE_SET_FINISH,
         ).grid(row=0, column=6, padx=5)
-        ttk.Label(controls, text="Algorithm").grid(row=0, column=7, sticky=tk.W)
+        ttk.Label(controls, text="Алгоритм").grid(row=0, column=7, sticky=tk.W)
         ttk.OptionMenu(
             controls,
             self.algorithm_var,
             self.algorithm_var.get(),
-            "Backtracking",
-            "Warnsdorff",
-            "Connectivity pruning",
-            "Backjumping",
+            *ALGORITHM_LABELS.keys(),
         ).grid(row=0, column=8, padx=5)
-        ttk.Button(controls, text="Solve", command=self.solve).grid(
+        ttk.Button(controls, text="Решить", command=self.solve).grid(
             row=0, column=9, padx=5
         )
-        ttk.Button(controls, text="Stop", command=self.stop).grid(
+        ttk.Button(controls, text="Стоп", command=self.stop).grid(
             row=0, column=10, padx=5
         )
-        ttk.Button(controls, text="Clear", command=self.clear_grid).grid(
+        ttk.Button(controls, text="Очистить", command=self.clear_grid).grid(
             row=0, column=11, padx=5
         )
 
@@ -76,7 +81,7 @@ class HamiltonTab(ttk.Frame):
 
         info = ttk.Frame(self)
         info.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10, pady=10)
-        ttk.Label(info, text="Results").pack(anchor=tk.W)
+        ttk.Label(info, text="Результаты").pack(anchor=tk.W)
         ttk.Label(info, textvariable=self.result_var, justify=tk.LEFT).pack(
             anchor=tk.NW, fill=tk.BOTH, expand=True
         )
@@ -120,7 +125,7 @@ class HamiltonTab(ttk.Frame):
             return
         pos = (row, col)
         mode = self.mode_var.get()
-        if mode == "Set start":
+        if mode == MODE_SET_START:
             if self.start:
                 self.set_cell(self.start, "white")
             if pos == self.finish:
@@ -128,7 +133,7 @@ class HamiltonTab(ttk.Frame):
             self.start = pos
             self.blocked.discard(pos)
             self.set_cell(pos, "green")
-        elif mode == "Set finish":
+        elif mode == MODE_SET_FINISH:
             if self.finish:
                 self.set_cell(self.finish, "white")
             if pos == self.start:
@@ -136,32 +141,21 @@ class HamiltonTab(ttk.Frame):
             self.finish = pos
             self.blocked.discard(pos)
             self.set_cell(pos, "red")
-        elif mode == "Toggle block":
-            if pos in self.blocked:
-                self.blocked.remove(pos)
-                self.set_cell(pos, "white")
-            else:
-                if pos == self.start:
-                    self.start = None
-                if pos == self.finish:
-                    self.finish = None
-                self.blocked.add(pos)
-                self.set_cell(pos, "#444")
 
     def set_busy(self, busy):
-        self.status_var.set("Working..." if busy else "Ready")
+        self.status_var.set("Выполняется..." if busy else "Готово")
 
     def solve(self):
         if not self.start or not self.finish:
-            messagebox.showwarning("Input", "Select start and finish cells.")
+            messagebox.showwarning("Ввод", "Выберите стартовую и финишную клетки.")
             return
         if self.worker and self.worker.is_alive():
-            messagebox.showinfo("Busy", "Solver is already running.")
+            messagebox.showinfo("Занято", "Решатель уже работает.")
             return
         self.stop_event = threading.Event()
         rows = self.rows_var.get()
         cols = self.cols_var.get()
-        mode = self.algorithm_var.get()
+        mode = ALGORITHM_LABELS[self.algorithm_var.get()]
         self.set_busy(True)
         self.result_var.set("")
 
@@ -190,7 +184,7 @@ class HamiltonTab(ttk.Frame):
     def finish_task(self, result, elapsed, peak_kb):
         self.set_busy(False)
         if result is None:
-            self.result_var.set("Stopped.")
+            self.result_var.set("Остановлено.")
             return
         result.elapsed = elapsed
         result.peak_kb = peak_kb

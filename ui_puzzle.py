@@ -18,12 +18,19 @@ from puzzle import (
 )
 from utils import SolverStats, StopSearch, format_stats, run_with_stats
 
+ALGORITHM_LABELS = {
+    "A* (Манхэттен)": "A* (Manhattan)",
+    "Поиск в ширину (BFS)": "BFS",
+    "IDA*": "IDA*",
+    "Обратные прыжки": "Backjumping",
+}
+
 
 class PuzzleTab(ttk.Frame):
     def __init__(self, master):
         super().__init__(master)
-        self.algorithm_var = tk.StringVar(value="A* (Manhattan)")
-        self.status_var = tk.StringVar(value="Ready")
+        self.algorithm_var = tk.StringVar(value="A* (Манхэттен)")
+        self.status_var = tk.StringVar(value="Готово")
         self.result_var = tk.StringVar(value="")
         self.stop_event = None
         self.worker = None
@@ -35,26 +42,23 @@ class PuzzleTab(ttk.Frame):
         controls = ttk.Frame(self)
         controls.pack(side=tk.TOP, fill=tk.X, padx=10, pady=5)
 
-        ttk.Label(controls, text="Algorithm").grid(row=0, column=0, sticky=tk.W)
+        ttk.Label(controls, text="Алгоритм").grid(row=0, column=0, sticky=tk.W)
         ttk.OptionMenu(
             controls,
             self.algorithm_var,
             self.algorithm_var.get(),
-            "A* (Manhattan)",
-            "BFS",
-            "IDA*",
-            "Backjumping",
+            *ALGORITHM_LABELS.keys(),
         ).grid(row=0, column=1, padx=5)
-        ttk.Button(controls, text="Randomize", command=self.randomize).grid(
+        ttk.Button(controls, text="Перемешать", command=self.randomize).grid(
             row=0, column=2, padx=5
         )
-        ttk.Button(controls, text="Reset", command=self.reset).grid(
+        ttk.Button(controls, text="Сбросить", command=self.reset).grid(
             row=0, column=3, padx=5
         )
-        ttk.Button(controls, text="Solve", command=self.solve).grid(
+        ttk.Button(controls, text="Решить", command=self.solve).grid(
             row=0, column=4, padx=5
         )
-        ttk.Button(controls, text="Stop", command=self.stop).grid(
+        ttk.Button(controls, text="Стоп", command=self.stop).grid(
             row=0, column=5, padx=5
         )
 
@@ -68,7 +72,7 @@ class PuzzleTab(ttk.Frame):
 
         info = ttk.Frame(self)
         info.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10, pady=10)
-        ttk.Label(info, text="Results").pack(anchor=tk.W)
+        ttk.Label(info, text="Результаты").pack(anchor=tk.W)
         ttk.Label(info, textvariable=self.result_var, justify=tk.LEFT).pack(
             anchor=tk.NW, fill=tk.BOTH, expand=True
         )
@@ -144,17 +148,17 @@ class PuzzleTab(ttk.Frame):
             self.render()
 
     def set_busy(self, busy):
-        self.status_var.set("Working..." if busy else "Ready")
+        self.status_var.set("Выполняется..." if busy else "Готово")
 
     def solve(self):
         if self.worker and self.worker.is_alive():
-            messagebox.showinfo("Busy", "Solver is already running.")
+            messagebox.showinfo("Занято", "Решатель уже работает.")
             return
         if not is_solvable(self.state):
-            messagebox.showwarning("Unsolvable", "This puzzle position is unsolvable.")
+            messagebox.showwarning("Неразрешимо", "Эта позиция неразрешима.")
             return
         self.stop_event = threading.Event()
-        algorithm = self.algorithm_var.get()
+        algorithm = ALGORITHM_LABELS[self.algorithm_var.get()]
         self.set_busy(True)
         self.result_var.set("")
 
@@ -194,10 +198,10 @@ class PuzzleTab(ttk.Frame):
     def finish_task(self, stats):
         self.set_busy(False)
         if stats is None:
-            self.result_var.set("Stopped.")
+            self.result_var.set("Остановлено.")
             return
         if stats.moves is None:
-            self.result_var.set("No solution.")
+            self.result_var.set("Нет решения.")
             return
         self.result_var.set(format_stats(stats))
         self.animate_solution(stats.moves)
