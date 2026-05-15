@@ -26,6 +26,7 @@ class SolverStats:
 GOAL_STATE = tuple(list(range(1, 16)) + [0])
 GOAL_POS = {value: divmod(idx, 4) for idx, value in enumerate(GOAL_STATE)}
 INF = float("inf")
+RANDOMIZE_MOVES = 120
 
 
 def run_with_stats(func):
@@ -245,6 +246,8 @@ def apply_move(state, move):
 
 
 def is_solvable(state):
+    if len(state) != 16:
+        raise ValueError("Expected a 4x4 puzzle state (16 tiles).")
     width = int(len(state) ** 0.5)
     values = [v for v in state if v != 0]
     inversions = 0
@@ -686,7 +689,7 @@ class PuzzleTab(ttk.Frame):
 
     def randomize(self):
         self.state = GOAL_STATE
-        for _ in range(120):
+        for _ in range(RANDOMIZE_MOVES):
             _, next_state = random.choice(list(puzzle_neighbors(self.state)))
             self.state = next_state
         self.render()
@@ -774,7 +777,7 @@ class PuzzleTab(ttk.Frame):
         """Animate a list of moves with a delay between frames.
 
         Args:
-            moves: List of move codes for the blank tile.
+            moves: List of move codes ('U', 'D', 'L', 'R') for the blank tile.
             delay: Delay in milliseconds between animation frames.
         """
         if not moves:
