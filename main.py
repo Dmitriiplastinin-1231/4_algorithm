@@ -25,6 +25,7 @@ class SolverStats:
 
 GOAL_STATE = tuple(list(range(1, 16)) + [0])
 GOAL_POS = {value: divmod(idx, 4) for idx, value in enumerate(GOAL_STATE)}
+INF = float("inf")
 
 
 def run_with_stats(func):
@@ -244,14 +245,15 @@ def apply_move(state, move):
 
 
 def is_solvable(state):
+    width = int(len(state) ** 0.5)
     values = [v for v in state if v != 0]
     inversions = 0
     for i in range(len(values)):
         for j in range(i + 1, len(values)):
             if values[i] > values[j]:
                 inversions += 1
-    blank_row_from_bottom = 4 - (state.index(0) // 4)
-    if 4 % 2 == 1:
+    blank_row_from_bottom = width - (state.index(0) // width)
+    if width % 2 == 1:
         return inversions % 2 == 0
     return (blank_row_from_bottom % 2 == 0) != (inversions % 2 == 0)
 
@@ -274,7 +276,7 @@ def solve_puzzle_astar(start, stop_event=None):
             return build_path(came_from, state), nodes
         for move, nxt in puzzle_neighbors(state):
             ng = g + 1
-            if ng < g_score.get(nxt, 1_000_000_000):
+            if ng < g_score.get(nxt, INF):
                 g_score[nxt] = ng
                 came_from[nxt] = (state, move)
                 heapq.heappush(open_heap, (ng + manhattan(nxt), ng, nxt))
@@ -769,6 +771,7 @@ class PuzzleTab(ttk.Frame):
         self.animate_solution(stats.moves)
 
     def animate_solution(self, moves, delay=120):
+        """Animate moves with delay in milliseconds between frames."""
         if not moves:
             return
 
