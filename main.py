@@ -27,8 +27,9 @@ PUZZLE_SIZE = 4
 GOAL_STATE = tuple(list(range(1, 16)) + [0])
 GOAL_POS = {value: divmod(idx, PUZZLE_SIZE) for idx, value in enumerate(GOAL_STATE)}
 INF = float("inf")
-SCRAMBLE_DEPTH = 120  # Scramble depth for generating a solvable random board.
+SCRAMBLE_MOVES = 120  # Random moves applied to generate a solvable board.
 ANIMATION_DELAY_MS = 120
+MAX_BACKJUMP_DEPTH = 80
 
 
 def run_with_stats(func):
@@ -379,7 +380,7 @@ def solve_puzzle_backjumping(start, stop_event=None):
             visited.remove(nxt)
         return False
 
-    while True:
+    while depth <= MAX_BACKJUMP_DEPTH:
         if stop_event and stop_event.is_set():
             raise StopSearch()
         path = []
@@ -388,6 +389,7 @@ def solve_puzzle_backjumping(start, stop_event=None):
         if found:
             return path, nodes_total, backjumps
         depth += 1
+    return None, nodes_total, backjumps
 
 
 def build_path(came_from, state):
@@ -694,8 +696,9 @@ class PuzzleTab(ttk.Frame):
 
     def randomize(self):
         self.state = GOAL_STATE
-        for _ in range(SCRAMBLE_DEPTH):
-            _, next_state = random.choice(list(puzzle_neighbors(self.state)))
+        for _ in range(SCRAMBLE_MOVES):
+            neighbors = list(puzzle_neighbors(self.state))
+            _, next_state = random.choice(neighbors)
             self.state = next_state
         self.render()
         self.result_var.set("")
@@ -783,7 +786,7 @@ class PuzzleTab(ttk.Frame):
 
         Args:
             moves: List of move codes ('U', 'D', 'L', 'R') for blank moves
-                (e.g., 'U' swaps the blank with the tile above it).
+                (e.g., 'U' moves the blank up, decreasing its row index).
             delay: Delay in milliseconds between animation frames.
         """
         if not moves:
