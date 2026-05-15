@@ -159,6 +159,7 @@ class PuzzleTab(ttk.Frame):
         except ValueError as exc:
             messagebox.showwarning("Размер", str(exc))
             return
+        self.size_var.set(puzzle.PUZZLE_SIZE)
         self.state = puzzle.GOAL_STATE
         self.build_board()
         self.render()

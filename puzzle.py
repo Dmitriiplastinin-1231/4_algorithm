@@ -5,6 +5,8 @@ from utils import StopSearch
 
 
 PUZZLE_SIZE = 4
+GOAL_STATE = ()
+GOAL_POS = {}
 
 
 def build_goal_state(size):
@@ -24,8 +26,7 @@ def set_puzzle_size(size):
     GOAL_POS = build_goal_pos(GOAL_STATE, size)
 
 
-GOAL_STATE = build_goal_state(PUZZLE_SIZE)
-GOAL_POS = build_goal_pos(GOAL_STATE, PUZZLE_SIZE)
+set_puzzle_size(PUZZLE_SIZE)
 INF = float("inf")
 SCRAMBLE_MOVES = 120  # Random moves applied to generate a solvable board.
 ANIMATION_DELAY_MS = 120
