@@ -46,8 +46,8 @@ class PuzzleTab(ttk.Frame):
         ttk.Label(controls, text="Размер").grid(row=0, column=0, sticky=tk.W)
         ttk.Spinbox(
             controls,
-            from_=2,
-            to=6,
+            from_=puzzle.MIN_PUZZLE_SIZE,
+            to=puzzle.MAX_PUZZLE_SIZE,
             textvariable=self.size_var,
             width=4,
         ).grid(row=0, column=1, sticky=tk.W)

@@ -4,6 +4,8 @@ from collections import deque
 from utils import StopSearch
 
 
+MIN_PUZZLE_SIZE = 2
+MAX_PUZZLE_SIZE = 6
 PUZZLE_SIZE = 4
 GOAL_STATE = ()
 GOAL_POS = {}
@@ -18,8 +20,11 @@ def build_goal_pos(goal_state, size):
 
 
 def set_puzzle_size(size):
-    if size < 2:
-        raise ValueError("Puzzle size must be at least 2.")
+    if size < MIN_PUZZLE_SIZE or size > MAX_PUZZLE_SIZE:
+        raise ValueError(
+            "Puzzle size must be between "
+            f"{MIN_PUZZLE_SIZE} and {MAX_PUZZLE_SIZE}."
+        )
     global PUZZLE_SIZE, GOAL_STATE, GOAL_POS
     PUZZLE_SIZE = size
     GOAL_STATE = build_goal_state(size)
