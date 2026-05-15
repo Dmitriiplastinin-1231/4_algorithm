@@ -27,7 +27,8 @@ PUZZLE_SIZE = 4
 GOAL_STATE = tuple(list(range(1, 16)) + [0])
 GOAL_POS = {value: divmod(idx, PUZZLE_SIZE) for idx, value in enumerate(GOAL_STATE)}
 INF = float("inf")
-RANDOMIZE_MOVES = 120
+RANDOMIZE_MOVES = 120  # Scramble depth for generating a solvable random board.
+ANIMATION_DELAY_MS = 120
 
 
 def run_with_stats(func):
@@ -94,6 +95,10 @@ def unvisited_degree(pos, free_cells, visited, rows, cols):
     return count
 
 
+def can_visit_finish(path_length, free_count):
+    return path_length == free_count - 1
+
+
 def solve_hamilton(rows, cols, start, finish, blocked, mode, stop_event=None):
     free_cells = {
         (r, c)
@@ -137,7 +142,7 @@ def solve_hamilton(rows, cols, start, finish, blocked, mode, stop_event=None):
         if use_connectivity and not connectivity_ok(free_cells, visited, rows, cols):
             return
         for nxt in ordered_moves(pos):
-            if nxt == finish and len(path) != free_count - 1:
+            if nxt == finish and not can_visit_finish(len(path), free_count):
                 continue
             visited.add(nxt)
             path.append(nxt)
@@ -175,7 +180,7 @@ def solve_hamilton(rows, cols, start, finish, blocked, mode, stop_event=None):
                     backjumps += jump_count
                 continue
             nxt = frame["moves"].pop(0)
-            if nxt == finish and len(path) != free_count - 1:
+            if nxt == finish and not can_visit_finish(len(path), free_count):
                 continue
             visited.add(nxt)
             path.append(nxt)
@@ -255,10 +260,10 @@ def is_solvable(state):
         for j in range(i + 1, len(values)):
             if values[i] > values[j]:
                 inversions += 1
-    blank_row_from_bottom_1indexed = PUZZLE_SIZE - (state.index(0) // PUZZLE_SIZE)
+    blank_row_from_bottom = PUZZLE_SIZE - (state.index(0) // PUZZLE_SIZE)
     if PUZZLE_SIZE % 2 == 1:
         return inversions % 2 == 0
-    return (blank_row_from_bottom_1indexed % 2 == 0) != (inversions % 2 == 0)
+    return (blank_row_from_bottom % 2 == 0) != (inversions % 2 == 0)
 
 
 def solve_puzzle_astar(start, stop_event=None):
@@ -773,7 +778,7 @@ class PuzzleTab(ttk.Frame):
         self.result_var.set(format_stats(stats))
         self.animate_solution(stats.moves)
 
-    def animate_solution(self, moves, delay=120):
+    def animate_solution(self, moves, delay=ANIMATION_DELAY_MS):
         """Animate a list of moves with a delay between frames.
 
         Args:
