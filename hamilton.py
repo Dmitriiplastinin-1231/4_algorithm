@@ -186,7 +186,6 @@ def solve_hamilton(rows, cols, start, finish, blocked, mode, stop_event=None):
             stack.append({"pos": nxt, "moves": available_moves(nxt)})
         return backjumps
 
-    visit(start)
     for nbr in neighbors[start]:
         if nbr in unvisited:
             remaining_degree[nbr] -= 1
