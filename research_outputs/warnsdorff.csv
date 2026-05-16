@@ -1,6 +1,0 @@
-study,alpha,trial,elapsed,recursive_calls,backtracks,dead_ends,solutions,pruned_states,jumps,depth_reduction,max_depth,status
-warnsdorff,0.0,0,0.0032954880002762366,1087,1086,208,0,0,0,0,14,ok
-warnsdorff,0.1,0,0.003532328999881429,1087,1086,208,0,0,0,0,14,ok
-warnsdorff,0.5,0,0.003404851000141207,1087,1086,208,0,0,0,0,14,ok
-warnsdorff,1.0,0,0.003374966000137647,1087,1086,208,0,0,0,0,14,ok
-warnsdorff,2.0,0,0.003374353999788582,1087,1086,208,0,0,0,0,14,ok
