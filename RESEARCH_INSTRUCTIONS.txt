@@ -1,0 +1,74 @@
+ПОЛНАЯ ИНСТРУКЦИЯ ПО ПОЛУЧЕНИЮ ДАННЫХ ДЛЯ ИССЛЕДОВАНИЯ
+
+1) Открой терминал и перейди в корень проекта:
+cd /home/runner/work/4_algorithm/4_algorithm
+
+2) (Опционально) Создай папку под результаты:
+mkdir -p research_outputs
+
+Примечание: если папки нет, скрипты теперь создают её автоматически при записи CSV.
+
+3) Запусти исследования по гамильтонову пути (CSV):
+
+3.1 Warnsdorff (влияние alpha):
+python research_hamilton.py warnsdorff --rows 4 --cols 4 --start 0,0 --finish 3,3 --trials 3 --output research_outputs/warnsdorff.csv
+
+3.2 Connectivity pruning (частота проверки связности):
+python research_hamilton.py connectivity --rows 4 --cols 4 --start 0,0 --finish 3,3 --trials 3 --output research_outputs/connectivity.csv
+
+3.3 Backjumping (режимы прыжков по глубине):
+python research_hamilton.py backjumping --rows 4 --cols 4 --start 0,0 --finish 3,3 --trials 3 --output research_outputs/backjumping.csv
+
+3.4 Влияние размера поля:
+python research_hamilton.py grid_size --trials 3 --output research_outputs/grid_size.csv
+
+3.5 Влияние выбора start/finish:
+python research_hamilton.py start_finish --trials 3 --output research_outputs/start_finish.csv
+
+4) Запусти исследования по 15-puzzle (CSV):
+
+4.1 Weighted Manhattan (w):
+python research_puzzle.py weighted_manhattan --size 4 --scramble-depth 20 --trials 5 --output research_outputs/weighted_manhattan.csv
+
+4.2 Linear Conflict (beta):
+python research_puzzle.py linear_conflict --size 4 --scramble-depth 20 --trials 5 --output research_outputs/linear_conflict.csv
+
+4.3 Влияние глубины перемешивания:
+python research_puzzle.py scramble_depth --size 4 --trials 5 --output research_outputs/scramble_depth.csv
+
+5) Если расчеты долгие, добавляй лимиты в любую команду:
+--time-limit 20 --node-limit 500000
+
+Пример:
+python research_hamilton.py connectivity --rows 4 --cols 4 --start 0,0 --finish 3,3 --trials 3 --time-limit 20 --node-limit 500000 --output research_outputs/connectivity.csv
+
+6) Какие файлы должны получиться:
+research_outputs/warnsdorff.csv
+research_outputs/connectivity.csv
+research_outputs/backjumping.csv
+research_outputs/grid_size.csv
+research_outputs/start_finish.csv
+research_outputs/weighted_manhattan.csv
+research_outputs/linear_conflict.csv
+research_outputs/scramble_depth.csv
+
+7) Какие колонки брать для отчета:
+
+7.1 Hamilton:
+elapsed, recursive_calls, backtracks, dead_ends, solutions, max_depth, status
+Дополнительно:
+- connectivity: pruned_states
+- backjumping: jumps, depth_reduction
+
+7.2 15-puzzle:
+elapsed, expanded, solution_length, status
+Дополнительно:
+- weighted_manhattan: optimal_length, optimality
+- scramble_depth (BFS): peak_open_size
+
+8) Проверка, что данные действительно записались:
+ls -lh research_outputs/*.csv
+
+9) Быстрый просмотр первых строк:
+head -n 5 research_outputs/warnsdorff.csv
+head -n 5 research_outputs/weighted_manhattan.csv
