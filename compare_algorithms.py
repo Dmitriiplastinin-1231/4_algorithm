@@ -396,7 +396,7 @@ def run_task1(args: argparse.Namespace) -> list[dict]:
                 start,
                 finish,
                 mode="max_conflict",
-                warnsdorff_alpha=0.0,
+                warnsdorff_alpha=0.1,
                 rng=random.Random(args.seed + 300 + trial),
                 time_limit_sec=args.time_limit,
                 node_limit=args.node_limit,
@@ -587,9 +587,7 @@ def run_task2(args: argparse.Namespace) -> list[dict]:
                 if optimal_length == 0:
                     optimality = 1.0 if solution_length == 0 else None
                 else:
-                    optimality = solution_length / optimal_length
-            elif solution_length == 0 and optimal_length == 0:
-                optimality = 1.0
+                    optimality = optimal_length / solution_length
 
             rows.append(
                 {
