@@ -197,7 +197,7 @@ def run_weighted_manhattan(args: argparse.Namespace) -> None:
             elapsed = time.perf_counter() - t0
             length = len(path) if path is not None else None
             optimality = None
-            if length is not None and optimal_len:
+            if length is not None and optimal_len is not None:
                 optimality = length / optimal_len
             rows.append(
                 {
