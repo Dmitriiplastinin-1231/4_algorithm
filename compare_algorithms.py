@@ -542,26 +542,26 @@ def run_task2(args: argparse.Namespace) -> list[dict]:
         astar_path = astar_result["path"]
         optimal_length = len(astar_path) if astar_path is not None and astar_result["status"] == "ok" else None
 
-        task2_runs = [
+        task2_results = [
             (
                 "A* (Manhattan)",
                 "baseline",
-                lambda: astar_result,
+                astar_result,
             ),
             (
                 "BFS",
                 "baseline",
-                lambda: measure_bfs(start),
+                measure_bfs(start),
             ),
             (
                 "IDA*",
                 "w=1.0",
-                lambda: measure_ida(start, manhattan_distance),
+                measure_ida(start, manhattan_distance),
             ),
             (
                 "IDA* + Linear conflict",
                 "beta=2",
-                lambda: measure_ida(
+                measure_ida(
                     start,
                     lambda state: manhattan_distance(state) + 2 * linear_conflict_score(state),
                 ),
@@ -569,12 +569,11 @@ def run_task2(args: argparse.Namespace) -> list[dict]:
             (
                 "Backjumping",
                 "baseline",
-                lambda: measure_backjumping(start),
+                measure_backjumping(start),
             ),
         ]
 
-        for algorithm, params, runner in task2_runs:
-            result = runner()
+        for algorithm, params, result in task2_results:
             path = result["path"]
             expanded = result["expanded"]
             peak_open = result["peak_open_size"]
@@ -585,7 +584,7 @@ def run_task2(args: argparse.Namespace) -> list[dict]:
             optimality = None
             if solution_length is not None and optimal_length is not None:
                 if optimal_length == 0:
-                    optimality = 1.0 if solution_length == 0 else None
+                    optimality = 1.0 if solution_length == 0 else 0.0
                 else:
                     optimality = optimal_length / solution_length
 
