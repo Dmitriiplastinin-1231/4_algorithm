@@ -359,13 +359,13 @@ def run_task1(args: argparse.Namespace) -> list[dict]:
         },
         {
             "algorithm": "Warnsdorff",
-            "params": "alpha=0.0",
+            "params": "alpha=0.1",
             "runner": lambda trial: solve_hamilton_dfs(
                 args.hamilton_rows,
                 args.hamilton_cols,
                 start,
                 finish,
-                warnsdorff_alpha=0.0,
+                warnsdorff_alpha=0.1,
                 connectivity_policy="never",
                 rng=random.Random(args.seed + 100 + trial),
                 time_limit_sec=args.time_limit,
@@ -470,120 +470,124 @@ def run_task2(args: argparse.Namespace) -> list[dict]:
     rng = random.Random(args.seed)
     rows = []
 
-    for trial in range(args.puzzle_trials):
-        start = random_scramble(args.puzzle_scramble_depth, rng)
-
-        astar_t0 = time.perf_counter()
-        astar_path, astar_expanded, astar_peak_open, astar_status = astar_limited(
-            start,
+    def measure_astar(start_state: tuple[int, ...]) -> dict:
+        t0 = time.perf_counter()
+        path, expanded, peak_open, status = astar_limited(
+            start_state,
             time_limit_sec=args.time_limit,
             node_limit=args.node_limit,
         )
-        astar_elapsed = time.perf_counter() - astar_t0
-        optimal_length = len(astar_path) if astar_path is not None and astar_status == "ok" else None
+        return {
+            "path": path,
+            "expanded": expanded,
+            "peak_open_size": peak_open,
+            "status": status,
+            "elapsed": time.perf_counter() - t0,
+            "backjumps": 0,
+        }
+
+    def measure_bfs(start_state: tuple[int, ...]) -> dict:
+        t0 = time.perf_counter()
+        path, expanded, peak_open, status = bfs_limited(
+            start_state,
+            time_limit_sec=args.time_limit,
+            node_limit=args.node_limit,
+        )
+        return {
+            "path": path,
+            "expanded": expanded,
+            "peak_open_size": peak_open,
+            "status": status,
+            "elapsed": time.perf_counter() - t0,
+            "backjumps": 0,
+        }
+
+    def measure_ida(start_state: tuple[int, ...], heuristic) -> dict:
+        t0 = time.perf_counter()
+        path, expanded, status = ida_star_limited(
+            start_state,
+            heuristic=heuristic,
+            time_limit_sec=args.time_limit,
+            node_limit=args.node_limit,
+        )
+        return {
+            "path": path,
+            "expanded": expanded,
+            "peak_open_size": None,
+            "status": status,
+            "elapsed": time.perf_counter() - t0,
+            "backjumps": 0,
+        }
+
+    def measure_backjumping(start_state: tuple[int, ...]) -> dict:
+        t0 = time.perf_counter()
+        path, expanded, backjumps, status = backjumping_limited(
+            start_state,
+            time_limit_sec=args.time_limit,
+            node_limit=args.node_limit,
+        )
+        return {
+            "path": path,
+            "expanded": expanded,
+            "peak_open_size": None,
+            "status": status,
+            "elapsed": time.perf_counter() - t0,
+            "backjumps": backjumps,
+        }
+
+    for trial in range(args.puzzle_trials):
+        start = random_scramble(args.puzzle_scramble_depth, rng)
+
+        astar_result = measure_astar(start)
+        astar_path = astar_result["path"]
+        optimal_length = len(astar_path) if astar_path is not None and astar_result["status"] == "ok" else None
 
         task2_runs = [
             (
                 "A* (Manhattan)",
                 "baseline",
-                None,
-                astar_expanded,
-                astar_peak_open,
-                astar_path,
-                astar_status,
-                astar_elapsed,
-                0,
+                lambda: astar_result,
             ),
             (
                 "BFS",
                 "baseline",
-                lambda: bfs_limited(
-                    start,
-                    time_limit_sec=args.time_limit,
-                    node_limit=args.node_limit,
-                ),
-                None,
-                None,
-                None,
-                None,
-                None,
-                0,
+                lambda: measure_bfs(start),
             ),
             (
                 "IDA*",
                 "w=1.0",
-                lambda: ida_star_limited(
-                    start,
-                    heuristic=manhattan_distance,
-                    time_limit_sec=args.time_limit,
-                    node_limit=args.node_limit,
-                ),
-                None,
-                None,
-                None,
-                None,
-                None,
-                0,
+                lambda: measure_ida(start, manhattan_distance),
             ),
             (
                 "IDA* + Linear conflict",
                 "beta=2",
-                lambda: ida_star_limited(
+                lambda: measure_ida(
                     start,
-                    heuristic=lambda state: manhattan_distance(state) + 2 * linear_conflict_score(state),
-                    time_limit_sec=args.time_limit,
-                    node_limit=args.node_limit,
+                    lambda state: manhattan_distance(state) + 2 * linear_conflict_score(state),
                 ),
-                None,
-                None,
-                None,
-                None,
-                None,
-                0,
             ),
             (
                 "Backjumping",
                 "baseline",
-                lambda: backjumping_limited(
-                    start,
-                    time_limit_sec=args.time_limit,
-                    node_limit=args.node_limit,
-                ),
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
+                lambda: measure_backjumping(start),
             ),
         ]
 
-        for algorithm, params, runner, cached_expanded, cached_peak, cached_path, cached_status, cached_elapsed, cached_backjumps in task2_runs:
-            if cached_status is not None:
-                path = cached_path
-                expanded = cached_expanded
-                peak_open = cached_peak
-                status = cached_status
-                elapsed = cached_elapsed
-                backjumps = cached_backjumps
-            else:
-                t0 = time.perf_counter()
-                result = runner()
-                elapsed = time.perf_counter() - t0
-                if algorithm == "Backjumping":
-                    path, expanded, backjumps, status = result
-                    peak_open = None
-                else:
-                    if len(result) == 4:
-                        path, expanded, peak_open, status = result
-                    else:
-                        path, expanded, status = result
-                        peak_open = None
-                    backjumps = 0
+        for algorithm, params, runner in task2_runs:
+            result = runner()
+            path = result["path"]
+            expanded = result["expanded"]
+            peak_open = result["peak_open_size"]
+            status = result["status"]
+            elapsed = result["elapsed"]
+            backjumps = result["backjumps"]
             solution_length = len(path) if path is not None else None
             optimality = None
-            if solution_length is not None and optimal_length not in (None, 0):
-                optimality = solution_length / optimal_length
+            if solution_length is not None and optimal_length is not None:
+                if optimal_length == 0:
+                    optimality = 1.0 if solution_length == 0 else None
+                else:
+                    optimality = solution_length / optimal_length
             elif solution_length == 0 and optimal_length == 0:
                 optimality = 1.0
 

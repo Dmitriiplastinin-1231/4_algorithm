@@ -80,7 +80,7 @@ python compare_algorithms.py --output-dir comparison_outputs
 
 By default the script:
 - compares task 1 algorithms on a 4x4 grid with start `(0,0)` and finish `(3,3)`
-- uses the best study settings: Warnsdorff `alpha=0.0`, connectivity pruning `policy=1`, backjumping `mode=max_conflict`
+- uses the best study settings: Warnsdorff `alpha=0.1`, connectivity pruning `policy=1`, backjumping `mode=max_conflict`
 - compares task 2 algorithms on a 4x4 puzzle with scramble depth `20`
 - uses the best study settings: IDA* with `w=1.0` and linear conflict with `beta=2`
 
