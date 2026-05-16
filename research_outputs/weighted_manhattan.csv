@@ -1,0 +1,6 @@
+study,trial,scramble_depth,w,elapsed,expanded,solution_length,optimal_length,optimality,status
+weighted_manhattan,0,5,0.5,0.0002981269999509095,73,5,5,1.0,ok
+weighted_manhattan,0,5,1.0,4.6827000005578157e-05,11,5,5,1.0,ok
+weighted_manhattan,0,5,1.5,4.525499980445602e-05,11,5,5,1.0,ok
+weighted_manhattan,0,5,2.0,5.532399973162683e-05,12,5,5,1.0,ok
+weighted_manhattan,0,5,3.0,7.440899980792892e-05,18,5,5,1.0,ok

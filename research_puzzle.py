@@ -1,5 +1,6 @@
 import argparse
 import csv
+import os
 import random
 import time
 from dataclasses import dataclass
@@ -9,6 +10,12 @@ from puzzle import GOAL_STATE, apply_move, puzzle_neighbors, set_puzzle_size
 
 
 INF = float("inf")
+
+
+def ensure_output_dir(path: str) -> None:
+    output_dir = os.path.dirname(path)
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
 
 
 @dataclass
@@ -217,6 +224,7 @@ def run_weighted_manhattan(args: argparse.Namespace) -> None:
                 }
             )
 
+    ensure_output_dir(args.output)
     with open(args.output, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
         writer.writeheader()
@@ -252,6 +260,7 @@ def run_linear_conflict(args: argparse.Namespace) -> None:
                 }
             )
 
+    ensure_output_dir(args.output)
     with open(args.output, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
         writer.writeheader()
@@ -311,6 +320,7 @@ def run_scramble_depth(args: argparse.Namespace) -> None:
                 }
             )
 
+    ensure_output_dir(args.output)
     with open(args.output, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
         writer.writeheader()

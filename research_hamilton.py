@@ -1,5 +1,6 @@
 import argparse
 import csv
+import os
 import random
 import time
 from dataclasses import dataclass
@@ -309,6 +310,9 @@ def solve_hamilton_backjump(
 
 
 def write_rows(output: str, fieldnames: list[str], rows: list[dict]) -> None:
+    output_dir = os.path.dirname(output)
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
     with open(output, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
