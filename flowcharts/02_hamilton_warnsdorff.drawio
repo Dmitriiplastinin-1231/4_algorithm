@@ -57,26 +57,48 @@
           <mxGeometry x="350" y="1140" width="160" height="60" as="geometry"/>
         </mxCell>
 
-        <mxCell id="l1" edge="1" parent="1" source="s" target="in" style="endArrow=classic;html=1;"/>
-        <mxCell id="l2" edge="1" parent="1" source="in" target="init" style="endArrow=classic;html=1;"/>
-        <mxCell id="l3" edge="1" parent="1" source="init" target="valid" style="endArrow=classic;html=1;"/>
-        <mxCell id="l4" value="Нет" edge="1" parent="1" source="valid" target="ret0" style="endArrow=classic;html=1;"/>
-        <mxCell id="l5" value="Да" edge="1" parent="1" source="valid" target="call" style="endArrow=classic;html=1;"/>
+        <mxCell id="l1" edge="1" parent="1" source="s" target="in" style="endArrow=classic;html=1;rounded=0;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="l2" edge="1" parent="1" source="in" target="init" style="endArrow=classic;html=1;rounded=0;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="l3" edge="1" parent="1" source="init" target="valid" style="endArrow=classic;html=1;rounded=0;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="l4" value="Нет" edge="1" parent="1" source="valid" target="ret0" style="endArrow=classic;html=1;rounded=0;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="l5" value="Да" edge="1" parent="1" source="valid" target="call" style="endArrow=classic;html=1;rounded=0;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
         <mxCell id="l6" edge="1" parent="1" source="ret0" target="out" style="endArrow=classic;html=1;">
           <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="130" y="1075"/></Array></mxGeometry>
         </mxCell>
-        <mxCell id="l7" edge="1" parent="1" source="call" target="full" style="endArrow=classic;html=1;"/>
-        <mxCell id="l8" value="Да" edge="1" parent="1" source="full" target="sol" style="endArrow=classic;html=1;"/>
-        <mxCell id="l9" value="Нет" edge="1" parent="1" source="full" target="moves" style="endArrow=classic;html=1;"/>
-        <mxCell id="l10" edge="1" parent="1" source="moves" target="sort" style="endArrow=classic;html=1;"/>
-        <mxCell id="l11" edge="1" parent="1" source="sort" target="loop" style="endArrow=classic;html=1;"/>
+        <mxCell id="l7" edge="1" parent="1" source="call" target="full" style="endArrow=classic;html=1;rounded=0;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="l8" value="Да" edge="1" parent="1" source="full" target="sol" style="endArrow=classic;html=1;rounded=0;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="l9" value="Нет" edge="1" parent="1" source="full" target="moves" style="endArrow=classic;html=1;rounded=0;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="l10" edge="1" parent="1" source="moves" target="sort" style="endArrow=classic;html=1;rounded=0;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="l11" edge="1" parent="1" source="sort" target="loop" style="endArrow=classic;html=1;rounded=0;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
         <mxCell id="l12" value="следующий ход" edge="1" parent="1" source="loop" target="full" style="endArrow=classic;html=1;">
           <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="140" y="955"/><mxPoint x="140" y="595"/></Array></mxGeometry>
         </mxCell>
         <mxCell id="l13" edge="1" parent="1" source="sol" target="out" style="endArrow=classic;html=1;">
           <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="735" y="1075"/></Array></mxGeometry>
         </mxCell>
-        <mxCell id="l14" edge="1" parent="1" source="out" target="e" style="endArrow=classic;html=1;"/>
+        <mxCell id="l14" edge="1" parent="1" source="out" target="e" style="endArrow=classic;html=1;rounded=0;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
