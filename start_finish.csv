@@ -1,0 +1,13 @@
+study,config,start,finish,trial,elapsed,recursive_calls,backtracks,dead_ends,solutions,pruned_states,jumps,depth_reduction,max_depth,status
+start_finish,corner_to_opposite_corner,"(0, 0)","(3, 3)",0,0.0032759000023361295,1087,1086,208,0,0,0,0,14,ok
+start_finish,corner_to_opposite_corner,"(0, 0)","(3, 3)",1,0.0029122999985702336,1087,1086,208,0,0,0,0,14,ok
+start_finish,corner_to_opposite_corner,"(0, 0)","(3, 3)",2,0.0029359999898588285,1087,1086,208,0,0,0,0,14,ok
+start_finish,corner_to_center,"(0, 0)","(1, 1)",0,0.0010821000032592565,397,396,52,0,0,0,0,14,ok
+start_finish,corner_to_center,"(0, 0)","(1, 1)",1,0.0010970000002998859,397,396,52,0,0,0,0,14,ok
+start_finish,corner_to_center,"(0, 0)","(1, 1)",2,0.0011519999970914796,397,396,52,0,0,0,0,14,ok
+start_finish,center_to_center,"(1, 1)","(2, 2)",0,0.0007858999888412654,289,288,40,0,0,0,0,14,ok
+start_finish,center_to_center,"(1, 1)","(2, 2)",1,0.0007891999994171783,289,288,40,0,0,0,0,14,ok
+start_finish,center_to_center,"(1, 1)","(2, 2)",2,0.0007795999990776181,289,288,40,0,0,0,0,14,ok
+start_finish,neighbor_to_neighbor,"(1, 1)","(1, 2)",0,0.0010100999934365973,387,386,61,4,0,0,0,16,ok
+start_finish,neighbor_to_neighbor,"(1, 1)","(1, 2)",1,0.0010422000050311908,387,386,61,4,0,0,0,16,ok
+start_finish,neighbor_to_neighbor,"(1, 1)","(1, 2)",2,0.0010200999968219548,387,386,61,4,0,0,0,16,ok

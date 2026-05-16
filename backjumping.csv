@@ -1,0 +1,10 @@
+study,mode,trial,elapsed,recursive_calls,backtracks,dead_ends,solutions,pruned_states,jumps,depth_reduction,max_depth,status
+backjumping,one_level,0,0.004243699993821792,2357,0,1087,0,0,1086,0,14,ok
+backjumping,one_level,1,0.004236799999489449,2357,0,1087,0,0,1086,0,14,ok
+backjumping,one_level,2,0.00425659999018535,2357,0,1087,0,0,1086,0,14,ok
+backjumping,last_conflict,0,0.0034551999997347593,1605,0,335,0,0,334,752,14,ok
+backjumping,last_conflict,1,0.0034933999995701015,1605,0,335,0,0,334,752,14,ok
+backjumping,last_conflict,2,0.0034699999960139394,1605,0,335,0,0,334,752,14,ok
+backjumping,max_conflict,0,0.0002393000031588599,90,0,15,0,0,14,54,14,ok
+backjumping,max_conflict,1,0.00023700000019744039,90,0,15,0,0,14,54,14,ok
+backjumping,max_conflict,2,0.0002356000040890649,90,0,15,0,0,14,54,14,ok
