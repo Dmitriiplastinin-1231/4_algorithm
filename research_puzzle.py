@@ -198,7 +198,10 @@ def run_weighted_manhattan(args: argparse.Namespace) -> None:
             length = len(path) if path is not None else None
             optimality = None
             if length is not None and optimal_len is not None:
-                optimality = length / optimal_len
+                if optimal_len == 0:
+                    optimality = 1.0 if length == 0 else None
+                else:
+                    optimality = length / optimal_len
             rows.append(
                 {
                     "study": "weighted_manhattan",
@@ -244,7 +247,7 @@ def run_linear_conflict(args: argparse.Namespace) -> None:
                     "beta": beta,
                     "elapsed": elapsed,
                     "expanded": expanded,
-                    "solution_length": len(path) if path else None,
+                    "solution_length": len(path) if path is not None else None,
                     "status": status,
                 }
             )
