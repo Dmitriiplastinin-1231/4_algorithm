@@ -69,3 +69,21 @@ Main exported metrics:
 - peak_open_size for BFS (scramble depth study)
 
 Both scripts support `--time-limit` and `--node-limit` to cap expensive runs.
+
+## Best-variant algorithm comparison
+
+To compare the best variants found in the studies and save separate summary tables for both tasks:
+
+```bash
+python compare_algorithms.py --output-dir comparison_outputs
+```
+
+By default the script:
+- compares task 1 algorithms on a 4x4 grid with start `(0,0)` and finish `(3,3)`
+- uses the best study settings: Warnsdorff `alpha=0.0`, connectivity pruning `policy=1`, backjumping `mode=max_conflict`
+- compares task 2 algorithms on a 4x4 puzzle with scramble depth `20`
+- uses the best study settings: IDA* with `w=1.0` and linear conflict with `beta=2`
+
+Generated files:
+- `comparison_outputs/task1_algorithm_comparison.csv`
+- `comparison_outputs/task2_algorithm_comparison.csv`
