@@ -89,6 +89,15 @@ def summarize(rows: list[dict], group_key: str, metrics: list[str]) -> list[dict
 
 
 def random_scramble(depth: int, rng: random.Random) -> tuple[int, ...]:
+    """Build a solvable randomized puzzle state by applying moves from the goal.
+
+    Args:
+        depth: Number of random moves to apply from the goal state.
+        rng: Source of randomness used to choose the next valid move.
+
+    Returns:
+        A solvable puzzle state produced from the current goal state.
+    """
     state = puzzle.GOAL_STATE
     prev_move = None
     opposite = {"U": "D", "D": "U", "L": "R", "R": "L"}
@@ -104,11 +113,13 @@ def random_scramble(depth: int, rng: random.Random) -> tuple[int, ...]:
     return state
 
 
-def manhattan_distance(state: tuple[int, ...]) -> int:
-    return puzzle.manhattan(state)
-
-
 def linear_conflict_score(state: tuple[int, ...]) -> int:
+    """Count linear conflicts for the current sliding-puzzle state.
+
+    A linear conflict occurs when two tiles belong to the same goal row/column
+    but appear in reversed order. Adding this count to Manhattan distance makes
+    the heuristic more informed than pure Manhattan distance alone.
+    """
     size = puzzle.PUZZLE_SIZE
     conflicts = 0
 
@@ -238,7 +249,7 @@ def astar_limited(start: tuple[int, ...], *, time_limit_sec: float, node_limit: 
     open_heap: list[tuple[int, int, tuple[int, ...]]] = []
     g_score = {start: 0}
     came_from = {start: (None, None)}
-    heapq.heappush(open_heap, (manhattan_distance(start), 0, start))
+    heapq.heappush(open_heap, (puzzle.manhattan(start), 0, start))
     expanded = 0
     peak_open_size = 1
     t0 = time.perf_counter()
@@ -262,7 +273,7 @@ def astar_limited(start: tuple[int, ...], *, time_limit_sec: float, node_limit: 
             if next_g < g_score.get(nxt, INF):
                 g_score[nxt] = next_g
                 came_from[nxt] = (state, move)
-                heapq.heappush(open_heap, (next_g + manhattan_distance(nxt), next_g, nxt))
+                heapq.heappush(open_heap, (next_g + puzzle.manhattan(nxt), next_g, nxt))
         peak_open_size = max(peak_open_size, len(open_heap))
 
     return None, expanded, peak_open_size, "no_solution"
@@ -288,7 +299,7 @@ def backjumping_limited(
 
     def ordered_neighbors(state: tuple[int, ...]) -> list[tuple[str, tuple[int, ...]]]:
         moves = list(puzzle_neighbors(state))
-        moves.sort(key=lambda item: manhattan_distance(item[1]))
+        moves.sort(key=lambda item: puzzle.manhattan(item[1]))
         return moves
 
     def dfs(state: tuple[int, ...], depth_limit: int, visited: set[tuple[int, ...]], path: list[str]):
@@ -556,14 +567,14 @@ def run_task2(args: argparse.Namespace) -> list[dict]:
             (
                 "IDA*",
                 "w=1.0",
-                measure_ida(start, manhattan_distance),
+                measure_ida(start, puzzle.manhattan),
             ),
             (
                 "IDA* + Linear conflict",
                 "beta=2",
                 measure_ida(
                     start,
-                    lambda state: manhattan_distance(state) + 2 * linear_conflict_score(state),
+                    lambda state: puzzle.manhattan(state) + 2 * linear_conflict_score(state),
                 ),
             ),
             (
@@ -584,7 +595,7 @@ def run_task2(args: argparse.Namespace) -> list[dict]:
             optimality = None
             if solution_length is not None and optimal_length is not None:
                 if optimal_length == 0:
-                    optimality = 1.0 if solution_length == 0 else 0.0
+                    optimality = 1.0 if solution_length == 0 else None
                 else:
                     optimality = optimal_length / solution_length
 
@@ -641,19 +652,19 @@ def run_task2(args: argparse.Namespace) -> list[dict]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Compare the best algorithm variants for both tasks")
-    parser.add_argument("--task", choices=["task1", "task2", "all"], default="all")
-    parser.add_argument("--output-dir", default="comparison_outputs")
-    parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--time-limit", type=float, default=20.0)
-    parser.add_argument("--node-limit", type=int, default=500000)
-    parser.add_argument("--hamilton-rows", type=int, default=4)
-    parser.add_argument("--hamilton-cols", type=int, default=4)
-    parser.add_argument("--hamilton-start", type=str, default="0,0")
-    parser.add_argument("--hamilton-finish", type=str, default="3,3")
-    parser.add_argument("--hamilton-trials", type=int, default=3)
-    parser.add_argument("--puzzle-size", type=int, default=4)
-    parser.add_argument("--puzzle-scramble-depth", type=int, default=20)
-    parser.add_argument("--puzzle-trials", type=int, default=5)
+    parser.add_argument("--task", choices=["task1", "task2", "all"], default="all", help="Which comparison table(s) to build.")
+    parser.add_argument("--output-dir", default="comparison_outputs", help="Directory where summary CSV files will be written.")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed used for reproducible puzzle scrambles and heuristic tie-breaking.")
+    parser.add_argument("--time-limit", type=float, default=20.0, help="Per-run time limit in seconds for bounded research solvers.")
+    parser.add_argument("--node-limit", type=int, default=500000, help="Per-run node limit for bounded research solvers.")
+    parser.add_argument("--hamilton-rows", type=int, default=4, help="Number of rows for the task 1 comparison grid.")
+    parser.add_argument("--hamilton-cols", type=int, default=4, help="Number of columns for the task 1 comparison grid.")
+    parser.add_argument("--hamilton-start", type=str, default="0,0", help="Start cell for task 1 in 'row,col' format.")
+    parser.add_argument("--hamilton-finish", type=str, default="3,3", help="Finish cell for task 1 in 'row,col' format.")
+    parser.add_argument("--hamilton-trials", type=int, default=3, help="Number of repeated runs for each task 1 algorithm.")
+    parser.add_argument("--puzzle-size", type=int, default=4, help="Sliding-puzzle size used for task 2 comparisons.")
+    parser.add_argument("--puzzle-scramble-depth", type=int, default=20, help="Number of scramble moves used to generate each task 2 start state.")
+    parser.add_argument("--puzzle-trials", type=int, default=5, help="Number of repeated runs for each task 2 algorithm.")
     args = parser.parse_args()
 
     if args.task in ("task1", "all"):
